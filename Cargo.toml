@@ -1,6 +1,6 @@
 [package]
 name = "jupiter_api"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "jupiter api client"
 authors = ["Bonedaddy", "alex@bonedaddy.io"]
@@ -32,7 +32,8 @@ version = "1"
 [dependencies.bytemuck]
 version = "1"
 [dependencies.spl-token]
-version = "2"
+version = "4"
+features = ["no-entrypoint"]
 
 [profile.release]
 opt-level = 3
