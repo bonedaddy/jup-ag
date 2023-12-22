@@ -1,13 +1,10 @@
 use std::collections::HashMap;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub const PRICE_BASE: &str = "https://price.jup.ag/v4/price";
 
-pub fn format_price_url(
-    mint_to_query: &str,
-    base_mint: &str
-) -> String {
+pub fn format_price_url(mint_to_query: &str, base_mint: &str) -> String {
     format!("{PRICE_BASE}?ids={mint_to_query}&vsToken={base_mint}")
 }
 

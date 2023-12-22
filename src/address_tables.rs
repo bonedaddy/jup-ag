@@ -16,12 +16,13 @@ pub async fn load_address_lookup_table<'a>(
     let accounts = accounts
         .into_iter()
         .enumerate()
-        .filter_map(|(idx, acct)| {
-            Some((LookupTable::deserialize(&acct?.data).ok()?, tables[idx]))
-        })
-        .map((|(lut, key)| {
-            AddressLookupTableAccount { key: key, addresses: lut.addresses }
-        }))
+        .filter_map(|(idx, acct)| Some((LookupTable::deserialize(&acct?.data).ok()?, tables[idx])))
+        .map(
+            (|(lut, key)| AddressLookupTableAccount {
+                key: key,
+                addresses: lut.addresses,
+            }),
+        )
         .collect::<Vec<_>>();
     Ok(accounts)
 }

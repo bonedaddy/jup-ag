@@ -1,3 +1,4 @@
+use crate::address_tables::load_address_lookup_table;
 use crate::quote_types::QuoteResponse;
 use anyhow::anyhow;
 use base64::engine::general_purpose::STANDARD as b64;
@@ -9,7 +10,6 @@ use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
 use std::sync::Arc;
-use crate::address_tables::load_address_lookup_table;
 pub const SWAP_BASE: &str = "https://quote-api.jup.ag/v6/swap-instructions";
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -44,7 +44,6 @@ pub struct ComputeBudgetIx {
     pub accounts: Vec<serde_json::Value>,
     pub data: String,
 }
-
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -86,15 +85,16 @@ impl SwapResponse {
             .collect::<Vec<_>>()
     }
     pub async fn new_v0_transaction(
-        &self, 
+        &self,
         rpc: &Arc<RpcClient>,
         payer: Pubkey,
-        prio_fee: Option<u64>, 
+        prio_fee: Option<u64>,
         cu_limit: Option<u32>,
     ) -> anyhow::Result<solana_sdk::message::v0::Message> {
-        let num_instructions = usize::from(prio_fee.is_some()) + 
-        usize::from(cu_limit.is_some()) +
-        self.setup_instructions.len() + 1 ; // 1 = swap tx
+        let num_instructions = usize::from(prio_fee.is_some())
+            + usize::from(cu_limit.is_some())
+            + self.setup_instructions.len()
+            + 1; // 1 = swap tx
 
         let mut instructions = Vec::with_capacity(num_instructions);
 
@@ -105,7 +105,11 @@ impl SwapResponse {
         if let Some(cu_limit) = cu_limit {
             instructions.push(ComputeBudgetInstruction::set_compute_unit_limit(cu_limit));
         }
-        let setup_ixs: Vec<Instruction> = self.setup_instructions.iter().filter_map(|ix| ix.to_instruction().ok()).collect();
+        let setup_ixs: Vec<Instruction> = self
+            .setup_instructions
+            .iter()
+            .filter_map(|ix| ix.to_instruction().ok())
+            .collect();
         instructions.extend_from_slice(&setup_ixs);
         instructions.push(self.swap_instruction.to_instruction()?);
         // omit cleanup
@@ -113,9 +117,9 @@ impl SwapResponse {
         let luts = load_address_lookup_table(rpc, &luts).await?;
         let msg = solana_sdk::message::v0::Message::try_compile(
             &payer,
-           &instructions,
+            &instructions,
             &luts,
-            rpc.get_latest_blockhash().await?
+            rpc.get_latest_blockhash().await?,
         )?;
         Ok(msg)
     }
@@ -150,7 +154,6 @@ impl SetupInstruction {
     }
 }
 
-
 impl SwapInstruction {
     pub fn to_instruction(&self) -> anyhow::Result<Instruction> {
         let ix_data = b64.decode(&self.data)?;
@@ -179,7 +182,6 @@ impl SwapInstruction {
         })
     }
 }
-
 
 impl CleanupInstruction {
     pub fn to_instruction(&self) -> anyhow::Result<Instruction> {

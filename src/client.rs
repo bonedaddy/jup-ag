@@ -1,8 +1,9 @@
 use anyhow::Context;
 
 use crate::{
+    price_types::{format_price_url, PriceResponse},
     quote_types::{format_quote_url, QuoteResponse, RequestOption},
-    swap_types::{SwapRequest, SwapResponse, SWAP_BASE}, price_types::{format_price_url, PriceResponse},
+    swap_types::{SwapRequest, SwapResponse, SWAP_BASE},
 };
 
 pub struct Client {
@@ -32,7 +33,14 @@ impl Client {
             .get(request_url)
             .header("Content-Type", "application/json")
             .build()?;
-        Ok(self.c.execute(request).await.with_context(|| "failed to execute quote lookup")?.json().await.with_context(|| "failed to decode response body")?)
+        Ok(self
+            .c
+            .execute(request)
+            .await
+            .with_context(|| "failed to execute quote lookup")?
+            .json()
+            .await
+            .with_context(|| "failed to decode response body")?)
     }
     pub async fn new_swap(
         &self,
@@ -58,14 +66,21 @@ impl Client {
     pub async fn price_query(
         &self,
         input_mint: &str,
-        output_mint: &str
+        output_mint: &str,
     ) -> anyhow::Result<PriceResponse> {
         let request = self
-        .c
-        .get(format_price_url(input_mint, output_mint))
-        .header("Content-Type", "application/json")
-        .build()?;
-        Ok(self.c.execute(request).await.with_context(|| "failed to execute price query")?.json().await.with_context(|| "faled to deserialize price query")?)
+            .c
+            .get(format_price_url(input_mint, output_mint))
+            .header("Content-Type", "application/json")
+            .build()?;
+        Ok(self
+            .c
+            .execute(request)
+            .await
+            .with_context(|| "failed to execute price query")?
+            .json()
+            .await
+            .with_context(|| "faled to deserialize price query")?)
     }
 }
 
@@ -97,10 +112,13 @@ mod test {
         let response = serde_json::to_string_pretty(&response).unwrap();
         println!("{}", response);
 
-        let price_response = client.price_query(
+        let price_response = client
+            .price_query(
                 "27G8MtK7VtTcCHkpASjSDdkWWYfoqT6ggEuKidVJidD4",
                 "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-        ).await.unwrap();
+            )
+            .await
+            .unwrap();
         println!("{:#?}", price_response);
     }
 }
