@@ -8,6 +8,7 @@ use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::pubkey::Pubkey;
+use solana_sdk::system_instruction;
 use std::str::FromStr;
 use std::sync::Arc;
 pub const SWAP_BASE: &str = "https://quote-api.jup.ag/v6/swap-instructions";
@@ -116,20 +117,36 @@ impl SwapResponse {
         instructions.extend_from_slice(&setup_ixs);
         instructions.push(self.swap_instruction.to_instruction()?);
         if let (Some(fee_recipient), Some(fee_amount)) = (fee_recipient, fee_amount) {
-            instructions.push(spl_associated_token_account::instruction::create_associated_token_account_idempotent(
-                &payer,
-                &fee_recipient,
-                &input_mint,
-                &spl_token::id()
-            ));
-            instructions.push(spl_token::instruction::transfer(
-                &spl_token::id(),
-                &spl_associated_token_account::get_associated_token_address(&payer, &input_mint),
-                &spl_associated_token_account::get_associated_token_address(&payer, &input_mint),
-                &payer,
-                &[],
-                fee_amount,
-            )?);
+            if input_mint.to_string() == "So11111111111111111111111111111111111111112" {
+                // this is a wrapped sol swap, so transfer plain sol
+                // we need to do this because jupiter handles auto wrapping sol -> wsol of the amount equal to the swap amount
+                instructions.push(system_instruction::transfer(
+                    &payer,
+                    &fee_recipient,
+                    fee_amount,
+                ));
+            } else {
+                instructions.push(spl_associated_token_account::instruction::create_associated_token_account_idempotent(
+                    &payer,
+                    &fee_recipient,
+                    &input_mint,
+                    &spl_token::id()
+                ));
+                instructions.push(spl_token::instruction::transfer(
+                    &spl_token::id(),
+                    &spl_associated_token_account::get_associated_token_address(
+                        &payer,
+                        &input_mint,
+                    ),
+                    &spl_associated_token_account::get_associated_token_address(
+                        &payer,
+                        &input_mint,
+                    ),
+                    &payer,
+                    &[],
+                    fee_amount,
+                )?);
+            }
         }
         // omit cleanup
         let luts = self.address_lookup_tables();
