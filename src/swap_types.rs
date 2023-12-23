@@ -139,7 +139,7 @@ impl SwapResponse {
                         &input_mint,
                     ),
                     &spl_associated_token_account::get_associated_token_address(
-                        &payer,
+                        &fee_recipient,
                         &input_mint,
                     ),
                     &payer,
