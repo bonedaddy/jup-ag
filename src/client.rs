@@ -1,4 +1,5 @@
-use anyhow::Context;
+use anyhow::{anyhow, Context};
+use reqwest::StatusCode;
 
 use crate::{
     price_types::{format_price_url, PriceResponse},
@@ -33,14 +34,18 @@ impl Client {
             .get(request_url)
             .header("Content-Type", "application/json")
             .build()?;
-        Ok(self
+        let res = self
             .c
             .execute(request)
             .await
-            .with_context(|| "failed to execute quote lookup")?
+            .with_context(|| "failed to execute quote lookup")?;
+        if res.status().ne(&StatusCode::OK) {
+            return Err(anyhow!("quote lookup failed {}", res.text().await?));
+        }
+        Ok(res
             .json()
             .await
-            .with_context(|| "failed to decode response body")?)
+            .with_context(|| "failed to decode quote lookup response")?)
     }
     pub async fn new_swap(
         &self,
@@ -61,7 +66,18 @@ impl Client {
             .header("Content-Type", "application/json")
             .json(&req_body)
             .build()?;
-        Ok(self.c.execute(request).await?.json().await?)
+        let res = self
+            .c
+            .execute(request)
+            .await
+            .with_context(|| "failed to execute new_swap")?;
+        if res.status().ne(&StatusCode::OK) {
+            return Err(anyhow!("new_swap failed {}", res.text().await?));
+        }
+        Ok(res
+            .json()
+            .await
+            .with_context(|| "failed to deserialize new_swap response")?)
     }
     pub async fn price_query(
         &self,
@@ -73,11 +89,15 @@ impl Client {
             .get(format_price_url(input_mint, output_mint))
             .header("Content-Type", "application/json")
             .build()?;
-        Ok(self
+        let res = self
             .c
             .execute(request)
             .await
-            .with_context(|| "failed to execute price query")?
+            .with_context(|| "failed to execute price query")?;
+        if res.status().ne(&StatusCode::OK) {
+            return Err(anyhow!("price lookup failed {}", res.text().await?));
+        }
+        Ok(res
             .json()
             .await
             .with_context(|| "faled to deserialize price query")?)
