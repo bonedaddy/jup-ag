@@ -1,13 +1,13 @@
-use std::sync::Arc;
-
 use crate::swap_types::SwapResponse;
 use anyhow::{anyhow, Context, Result};
 use solana_client::{nonblocking::rpc_client::RpcClient, rpc_config::RpcSendTransactionConfig};
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::{
     message::VersionedMessage,
     signature::{Keypair, Signature, Signer},
     transaction::VersionedTransaction,
 };
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct Swapper {
@@ -26,6 +26,9 @@ impl Swapper {
         cu_limit: Option<u32>,
         retries: Option<usize>,
         keypair_bytes: [u8; 64],
+        fee_recipient: Option<Pubkey>,
+        fee_amount: Option<u64>,
+        input_mint: Pubkey,
     ) -> Result<Signature> {
         let priority_fee = if let Some(fee) = priority_fee {
             Some(prio_fee(fee))
@@ -35,7 +38,15 @@ impl Swapper {
 
         let kp = Keypair::from_bytes(&keypair_bytes)?;
         let v0_msg = swap_response
-            .new_v0_transaction(&self.rpc, kp.pubkey(), priority_fee, cu_limit)
+            .new_v0_transaction(
+                &self.rpc,
+                kp.pubkey(),
+                priority_fee,
+                cu_limit,
+                input_mint,
+                fee_recipient,
+                fee_amount,
+            )
             .await?;
         let v_tx = VersionedTransaction::try_new(VersionedMessage::V0(v0_msg), &vec![&kp])?;
 

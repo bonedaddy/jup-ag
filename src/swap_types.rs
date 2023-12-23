@@ -90,6 +90,9 @@ impl SwapResponse {
         payer: Pubkey,
         prio_fee: Option<u64>,
         cu_limit: Option<u32>,
+        input_mint: Pubkey,
+        fee_recipient: Option<Pubkey>,
+        fee_amount: Option<u64>,
     ) -> anyhow::Result<solana_sdk::message::v0::Message> {
         let num_instructions = usize::from(prio_fee.is_some())
             + usize::from(cu_limit.is_some())
@@ -112,6 +115,22 @@ impl SwapResponse {
             .collect();
         instructions.extend_from_slice(&setup_ixs);
         instructions.push(self.swap_instruction.to_instruction()?);
+        if let (Some(fee_recipient), Some(fee_amount)) = (fee_recipient, fee_amount) {
+            instructions.push(spl_associated_token_account::instruction::create_associated_token_account_idempotent(
+                &payer,
+                &fee_recipient,
+                &input_mint,
+                &spl_token::id()
+            ));
+            instructions.push(spl_token::instruction::transfer(
+                &spl_token::id(),
+                &spl_associated_token_account::get_associated_token_address(&payer, &input_mint),
+                &spl_associated_token_account::get_associated_token_address(&payer, &input_mint),
+                &payer,
+                &[],
+                fee_amount,
+            )?);
+        }
         // omit cleanup
         let luts = self.address_lookup_tables();
         let luts = load_address_lookup_table(rpc, &luts).await?;

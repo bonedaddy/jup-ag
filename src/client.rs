@@ -110,7 +110,7 @@ mod test {
             .await
             .unwrap();
         let response = serde_json::to_string_pretty(&response).unwrap();
-        println!("{}", response);
+        //println!("{}", response);
 
         let price_response = client
             .price_query(
