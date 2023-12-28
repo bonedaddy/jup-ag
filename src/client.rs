@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::{anyhow, Context};
 use reqwest::StatusCode;
 
@@ -20,6 +22,22 @@ impl Client {
                 .deflate(true)
                 .build()?,
         })
+    }
+    pub async fn retrieve_token_list(&self) -> anyhow::Result<HashMap<String, TokenListEntry>> {
+        let request = self
+            .c
+            .get("https://token.jup.ag/all")
+            .header("Content-Type", "application/json")
+            .build()?;
+        Ok(self
+            .c
+            .execute(request)
+            .await?
+            .json::<Vec<TokenListEntry>>()
+            .await?
+            .into_iter()
+            .map(|t| (t.address.clone(), t))
+            .collect())
     }
     pub async fn new_quote(
         &self,
@@ -104,9 +122,33 @@ impl Client {
     }
 }
 
+#[derive(Default, Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TokenListEntry {
+    pub address: String,
+    pub chain_id: i64,
+    pub decimals: i64,
+    pub name: String,
+    pub symbol: String,
+    #[serde(rename = "logoURI")]
+    pub logo_uri: Option<String>,
+    pub tags: Vec<String>,
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+    #[tokio::test]
+    async fn test_token_list() {
+        let client = Client::new().unwrap();
+        let tokens = client.retrieve_token_list().await.unwrap();
+        println!(
+            "{:#?}",
+            tokens
+                .get("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")
+                .unwrap()
+        );
+    }
     #[tokio::test]
     async fn test_jlp_usdc_swap() {
         let client = Client::new().unwrap();
