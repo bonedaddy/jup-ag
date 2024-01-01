@@ -16,6 +16,7 @@ pub enum RequestOption<'a> {
     AsLegacyTransaction,
     PlatformFeeBps(u64),
     MaxAccounts(usize),
+    SlippageBps(i64), // 50 = 0.5%, 100 = 1%, 200 = 2%
 }
 
 pub enum SwapMode {
@@ -108,6 +109,9 @@ pub fn format_quote_url(
             }
             RequestOption::MaxAccounts(max_accounts) => {
                 quote_url = format!("{quote_url}?maxAccounts={max_accounts}");
+            }
+            RequestOption::SlippageBps(slip) => {
+                quote_url = format!("{quote_url}?slippageBps={slip}");
             }
         }
     }

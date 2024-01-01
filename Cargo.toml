@@ -1,6 +1,6 @@
 [package]
 name = "jupiter_api"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 description = "jupiter api client"
 authors = ["Bonedaddy", "alex@bonedaddy.io"]
