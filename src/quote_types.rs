@@ -90,7 +90,7 @@ pub fn format_quote_url(
     for request_option in request_options {
         match request_option {
             RequestOption::SwapMode(swap_mode) => {
-                quote_url = format!("{quote_url}?swapMode={}", swap_mode.to_string());
+                quote_url = format!("{quote_url}&swapMode={}", swap_mode.to_string());
             }
             RequestOption::Dexes(dexes) => {
                 // skip
@@ -99,19 +99,19 @@ pub fn format_quote_url(
                 // skip
             }
             RequestOption::OnlyDirectRoutes => {
-                quote_url = format!("{quote_url}?onlyDirectRoutes=true");
+                quote_url = format!("{quote_url}&onlyDirectRoutes=true");
             }
             RequestOption::AsLegacyTransaction => {
-                quote_url = format!("{quote_url}?asLegacyTransaction=true");
+                quote_url = format!("{quote_url}&asLegacyTransaction=true");
             }
             RequestOption::PlatformFeeBps(fee_bps) => {
-                quote_url = format!("{quote_url}?platformFeeBps={fee_bps}");
+                quote_url = format!("{quote_url}&platformFeeBps={fee_bps}");
             }
             RequestOption::MaxAccounts(max_accounts) => {
-                quote_url = format!("{quote_url}?maxAccounts={max_accounts}");
+                quote_url = format!("{quote_url}&maxAccounts={max_accounts}");
             }
             RequestOption::SlippageBps(slip) => {
-                quote_url = format!("{quote_url}?slippageBps={slip}");
+                quote_url = format!("{quote_url}&slippageBps={slip}");
             }
         }
     }

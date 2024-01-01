@@ -158,7 +158,7 @@ mod test {
                 "27G8MtK7VtTcCHkpASjSDdkWWYfoqT6ggEuKidVJidD4",
                 "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
                 1000000,
-                &[],
+                &[RequestOption::SlippageBps(100)],
             )
             .await
             .unwrap();
